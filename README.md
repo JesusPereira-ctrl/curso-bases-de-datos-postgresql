@@ -34,7 +34,7 @@
 - [Fechas, Intervalor y funciones sobre fechas](#fechas-intervalos-y-funciones-sobre-fechas)
 - [Case When](#case-when)
 - [Generacion de llaves primarias](#generacion-de-llaves-primarias)
-- [Diagramas Entidad Relacion](#diagramas-entidad-relacion)
+- [Diagramas Entidad Relacion](#erd-diagramas-entidad-relacion-o-entity-relation-diagram)
 
 ## Tener en cuanta
 
@@ -464,7 +464,7 @@ resetear sequence
 ALTER SEQUENCE <nombre_de_tu_secuencia> RESTART WITH 1;
 ```
 
-## Diagramas Entidad Relacion
+## ERD (Diagramas Entidad Relacion o Entity Relation Diagram)
 
 Este tipo de diagramas explica como cada entidad (tabla) se relaciona con otra entidad (otra tabla) por eso el nombre de Diagramas Entidad Relacion
 
@@ -474,7 +474,7 @@ Este tipo de diagramas explica como cada entidad (tabla) se relaciona con otra e
 <img width="600" height="1000" alt="diagrama-con-relaciones" svg" src="./assets/cardinalidad-ordinalidad-erd.png" />
 </div>
 
-### Software para crear Diagramas Entidad Relacion (explicacion de sus tier gratuitos)
+### Software para crear Diagramas Entidad Relacion
 
 1. [dbdiagram.io](https://dbdiagram.io/home)
 2. [Diagrams.net (formerly Draw.io)](https://app.diagrams.net/)
