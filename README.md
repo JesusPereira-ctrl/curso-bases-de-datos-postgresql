@@ -83,6 +83,9 @@ en otros motores de bases de datos la configuracion es diferente como por ejempl
 - [Sintaxis DBDiagram](#sintaxis-dbdiagram)
 - [Funciones en SQL](#funciones-en-bases-de-datos-con-postgresql)
 - [Vistas y Vistas Materializadas](#vistas--vistas-materializadas)
+- [CTEs](#ctes-common-table-expressions-o-expresiones-de-tablas-comunes)
+- [Procedimientos Almacenados](#procedimientos-almacenados-stored-proccedures)
+- [Triggers](#triggers)
 
 ## Tener en cuanta
 
