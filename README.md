@@ -20,6 +20,51 @@
 
 6. Revisar el **archivo docker-compose.yml** para los usuarios y contraseñas
 
+## Como crear una base de datos PostgreSQL con Docker
+
+instalar la base de datos directamente en la maquina es un sufrimiento ya que llenariamos nuestro sistema de archivos de cosas que no vamos a usar y si usaramos una base de datos en un trabajo por defecto tendriamos que usar su docker para traer esa base de datos de desarrollo por lo cual lo mejor es manejarla con docker, a continuacion un docker compose simple con la informacion proporcionada entre llaves `${}` que debemos agregar
+
+1. En un archivo `docker-compose.yml`
+
+   ```yaml
+   services:
+     dockerDB:
+       image: postgres:18-alpine
+       container_name: my-database
+       restart: always
+       ports:
+         - 5432:5432
+       environment:
+         - POSTGRES_USER=${NOMBRE_USUARIO}$
+         - POSTGRES_PASSWORD=${CONTRASEÑA_BASE_DATOS}
+         - POSTGRES_DB=${NOMBRE_BASE_DATOS}
+       volumes:
+         - ./postgres-data:/var/lib/postgresql
+   ```
+
+   recordar siempre no incluir la carpeta que viene con toda la data de nuestra base de datos al repositorio ya que subiria el tamaño de lo que deben descargar el resto de desarrolladores
+
+2. Levantar el `docker-compose.yml`, debemos estar en la ruta del archivo y en terminal ejecutar el siguiente comando
+
+   ```zsh
+   docker compose up -d
+   ```
+
+3. Como bajar la base de datos
+
+   ```zsh
+   docker compose down
+   ```
+
+Recordar que este contenedor se conecta al puerto `5432` de nuestra maquina, en caso de necesitar otro puerto debido a causas de que el puerto este usado, cambiar la configuracion del puerto de la siguiente manera
+
+```yml
+ports:
+  - ${QUE_PUERTO_QUIERO}:5432
+```
+
+en otros motores de bases de datos la configuracion es diferente como por ejemplo MySQL se conecta al puerto `3306` para ver la configuracion correspondiente de cada archivo `docker-compose.yml` se recomienda investigar en el repositorio de docker llamado [Docker_Hub](https://hub.docker.com/) y buscar su respectiva imagen para nuestra necesidad
+
 ## Indices de la guia de SQL con postgreSQL
 
 - [Conceptos Generales y Terminologias](#conceptos-generales-y-terminologias-sql)
@@ -31,10 +76,13 @@
 - [Relaciones](#relaciones)
 - [Llaves](#llaves)
 - [Uniones y Joins](#uniones-y-joins)
-- [Fechas, Intervalor y funciones sobre fechas](#fechas-intervalos-y-funciones-sobre-fechas)
+- [Fechas, Intervalos y funciones sobre fechas](#fechas-intervalos-y-funciones-sobre-fechas)
 - [Case When](#case-when)
 - [Generacion de llaves primarias](#generacion-de-llaves-primarias)
 - [Diagramas Entidad Relacion](#erd-diagramas-entidad-relacion-o-entity-relation-diagram)
+- [Sintaxis DBDiagram](#sintaxis-dbdiagram)
+- [Funciones en SQL](#funciones-en-bases-de-datos-con-postgresql)
+- [Vistas y Vistas Materializadas](#vistas--vistas-materializadas)
 
 ## Tener en cuanta
 
@@ -474,6 +522,82 @@ Este tipo de diagramas explica como cada entidad (tabla) se relaciona con otra e
 <img width="600" height="1000" alt="diagrama-con-relaciones" svg" src="./assets/cardinalidad-ordinalidad-erd.png" />
 </div>
 
+### Recomendaciones sobre diagramas de bases de datos
+
+1. Preguntas que deberiamos hacernos
+   - ¿Cual es el objetivo de la misma?
+
+   - ¿Como usaremos la base de datos?
+
+2. En general un buen diseño de base de datos cumple los siguientes objetivos
+   - Minimizar la redundancia -> evitar datos duplicados
+   - Proteger la precision -> no debemos permitir basura
+   - Ser accesible -> debemos ser capaces de la disponibilidad de la base de datos para obtener los datos que queremos
+   - Cumplir las expectativas -> cumplir necesidades de empresas, productos etc
+
+3. Determinar Objetivos
+   - Investigar previamente sobre diseños similares -> es dificil tener una idea de algo que no se haya hecho, mejor investigar y reutilizar que rehacer la rueda o aprender de otros expertos
+
+   - Traiga las partes interesadas -> traer las personas involucradas del proyecto ya sea el frontend, backend, devops etc nos trae terminologias y ideas
+
+   - Empapate del tema objetivo -> si es de hospitales involucrarnos en las palabras claves de un hospital para hacerla 100% al fin objetivo
+
+4. Principios a Seguir
+   - Mantenla simple -> nombres declarativos a las tablas
+   - Usa estandarizacion -> usar los estandares de las bases heredadas (la que nos pasaron)
+   - Considera futuras modificaciones -> considerar la evolucion futura
+   - Manten la deuda tecnica a raya -> si sabemos que algo esta mal o que puede fallar arreglar las cosas y mantener la deuda tecnica al minimo
+   - Normalizar la data -> evitar redundancia de la data, no tener tantos nulos
+   - Diseña a largo plazo -> las bases de datos viven mas que las aplicaciones, una aplicacion puede fallar pero la base de datos nunca
+   - Crea documentacion y diagramas -> porque hicimos ciertas cosas
+   - Prueba tu diseño -> para saber que funciona como esperamos
+   - No uses abreviaturas \*. Internationalization por i18n
+   - Se recomienda nombres tablas en singular
+   - No re-inventes la rueda
+   - Usa lo que el motor de bases de datos te ofrece
+   - Reglas, checks, llaves, indices, para evitar basura
+   - Manten la privacidad como prioridad
+   - Nombres en ingles evitar caracteres especiales
+   - Todo en minuscula sin espacios, se puede pero dificulta a la hora de hacer los `select` teniendo que agregar la tabla entre comillas dobles, ejemplo `select * from "tabla de usuarios"`
+   - manten la base de datos en su propio servidor
+   - manten un modelado bajo versiones
+   - establece el tipo apropiado y precision adecuada
+   - no confien en identificaciones de terceros
+   - defina las llaves foraneas y relaciones
+   - si es esquema es muy grande particionalo
+   - evita nombres reservadors `user`, `table`, `create`
+
+5. Ideas a tener en mente
+   - Los nombres de las tablas y campos viviran mas que las aplicaciones
+   - Los nombres son contratos si son nombres, nombres seran
+   - la base de datos gobierna sobre los demas
+
+6. Relaciones en Singular
+   Tablas vistas y cualquier relacion en singular
+   - Es posible tener una relacion uno a uno ¿Seguiria esto siendo plural?
+   - En ingles hay palabras que no tienen forma plural, "fish", "species", "series"
+   - Mucho software trabaja siguiendo esta regla de singular y se usa mejor de esa forma (sentido semantico)
+
+7. Nombrado Explicito
+   Evitar redundancia y lectura adicional
+   - Las llaves foraneas deben de ser una combinacion por ejemplo:
+
+     ```sql
+      create table team_member (
+          team_id bigint not null references team(id),
+          person_id bigint not null references person(id),
+          constraint team_member_pkey primary key (team_id, person_id));
+     ```
+
+   - Indices deben de ser explicitos: `person_idx_first_name_last_name`
+
+   - asi cuando algo falla sabemos que fallo
+
+8. ideas finales
+   - si ya hay una estructura creada que sigue otras reglas sigamos esas reglas
+   - no mezclemos ideologias si no pensamos cambiar todo
+   - estos pasos son utilies para empezar nuevos diseños
+
 ### Software para crear Diagramas Entidad Relacion
 
 1. [dbdiagram.io](https://dbdiagram.io/home)
@@ -486,3 +610,315 @@ Este tipo de diagramas explica como cada entidad (tabla) se relaciona con otra e
 8. [Miro](https://miro.com/)
 9. [gliffy](https://www.gliffy.com/solutions/diagrams-for-software-engineering)
 10. [Creately](https://creately.com/)
+
+## Sintaxis DBDiagram
+
+### Crear tablas
+
+```java
+  Table nombre_tabla {
+    id integer [pk, not null, note: 'primary key', unique]
+
+    created_at timestamp [default: 'now()', not null, note: 'fecha creacion']
+    // atributos
+
+    indexes {
+      (atributoA...) [unique]
+      (atributoA, atributoB)
+    }
+  }
+```
+
+### Crear Relaciones
+
+```java
+  Ref: atributo_tablaA <> atributo_tablaB // muchos a muchos
+  Ref: atributo_tablaA < atributo_tablaB // uno a muchos
+  Ref: atributo_tablaA > atributo_tablaB // muchos a uno
+  Ref: atributo_tablaA - atributo_tablaB // uno a uno
+```
+
+tambien podemos crear relaciones a la hora de crear las tablas
+
+```java
+enum product_status {
+  in_stock
+  out_of_stock
+  running_low
+}
+
+table product {
+  id int [pk, increment]
+  serial varchar
+  name varchar(200)
+  merchant int [ref: > merchant.id]
+  price float(8,2)
+  status product_status
+  stock int
+
+  created_at timestamp [default: 'now()']
+}
+
+table merchant {
+  id int [pk, increment]
+  name varchar
+  country int [ref: > country.id]
+
+  created_at timestamp [default: 'now()']
+}
+
+table country {
+  id int [pk, increment]
+  name varchar
+}
+```
+
+### Crear enumeraciones y asignarlas
+
+```java
+enum product_status {
+  in_stock
+  out_of_stock
+  running_low
+}
+
+table product {
+  product_id int [pk, increment]
+  serial varchar
+  name varchar(200)
+  merchant varchar
+  price float(8,2)
+  status product_status
+}
+```
+
+## Funciones en Bases De Datos con PostgreSQL
+
+las funciones de bases de datos son como las tipicas funciones que conocemos en lenguajes de programacion que pueden recibir argumentos y devuelven un resultado
+
+### Como crear una funcion en PostgreSQL
+
+```sql
+-- sin argumentos
+create or replace function sayHello()
+returns varchar -- tipo de retorno
+as
+$$ -- delimitante
+begin -- indicador de inicio
+return 'Hola Mundo'; -- retorno
+end -- indicador de final
+$$ -- delimitante
+language plpgsql; -- lenguaje de la funcion
+```
+
+```sql
+-- con argumentos
+create or replace function sayHello(user_name varchar)
+returns varchar -- tipo de retorno
+as
+$$ -- delimitante
+begin -- indicador de inicio
+  return 'Hola ' || user_name;
+end -- indicador de final
+$$ -- delimitante
+language plpgsql; -- lenguaje de la funcion
+```
+
+### Como llamar a la funcion
+
+```sql
+select sayHello();
+```
+
+```sql
+select sayHello(users.name), users.name from users;
+```
+
+### Declaracion de variables dentro de funciones
+
+```sql
+create or replace function comment_replies(id integer)
+returns json -- tipo de retorno
+as
+$$
+declare result json; -- declaracion de variables con tipo de dato
+
+begin
+  select
+    json_agg(
+      json_build_object(
+        'user', comments.user_id,
+        'comment', comments.content
+      )
+    ) into result -- asignacion de valores a la variable
+  from comments where comment_parent_id = id;
+
+  return result; -- retornamos el valor de la variable
+end
+$$
+language plpgsql;
+```
+
+## Vistas / Vistas Materializadas
+
+### Vistas
+
+las vistas son alias de consultas guardadas que puedes tratar como una tabla real no almacena datos fisicamente es como un lente o una ventana a traves de la cual miras tus tablas originales
+
+```sql
+CREATE VIEW vistas_citas_hoy AS
+SELECT
+    m.nombre AS mascota,
+    d.nombre AS dueño,
+    c.hora_cita
+FROM mascotas m
+JOIN dueños d ON m.dueño_id = d.id
+JOIN citas c ON c.mascota_id = m.id
+WHERE c.fecha = CURRENT_DATE;
+```
+
+ahora una vez creada la vista puedes llamarla con `select * from vistas_citas_hoy` y hara la consulta asignada tambien puedes decir que campos quieres llamar o si quieres hacer otras cosas
+
+### Vistas Materializadas
+
+copias de vistas en memoria, esta crea una tabla fisica con los datos realizados a guardar no vuelve a ejecutar nada a diferencia de las vistas comunes, el uso comun es realizar un resumen de algo y dejarlo guardado en una tabla especifica
+
+```sql
+create materialized view comments_per_week_mat as
+select
+  date_trunc('week', posts.created_at) as weeks,
+  sum(claps.counter) as total_claps,
+  count(distinct posts.post_id) as number_of_posts,
+  count(*) as number_of_clap
+from
+  posts
+inner join claps on
+  claps.post_id = posts.post_id
+group by
+  weeks
+order by
+  weeks desc;
+```
+
+al crear la vista materializada, siempre devolvera la data que devolvio al momento de crearla, si queremos actualizar la data con la misma consulta hacemos el siguiente comando
+
+```sql
+refresh materialized view comments_per_week_mat;
+```
+
+recordar que todo esto ocupa espacio en memoria lo que provoca que nuestra base de datos pese mas
+
+## Cambiar nombres de vistas y vistas materializadas
+
+```sql
+-- vistas
+alter view comments_per_week rename to posts_per_week;
+
+-- vistas materializadas
+alter materialized view comments_per_week_mat rename to posts_per_week_mat;
+```
+
+## CTEs (Common Table Expressions o Expresiones de Tablas Comunes)
+
+consultas temporales que existen durante la ejecucion de una unica sentencia
+
+```sql
+WITH mis_clientes_top AS (
+    -- Esta es la "tabla temporal"
+    SELECT id, nombre
+    FROM clientes
+    WHERE compras_anuales > 1000
+)
+-- Aquí usamos la CTE como si fuera una tabla de verdad
+SELECT * FROM mis_clientes_top WHERE nombre LIKE 'A%';
+```
+
+usamos la sentecia mis_clientes_top que es una consuta en un select abajo para hacer una consulta a la base de datos en vez de llenar la consulta de muchas consultas dentro
+
+### CTEs Recursivos
+
+es una consulta SQL que se llama a sí misma para resolver problemas que tienen estructura en forma de:
+
+`jerarquia o repeticion en niveles`
+
+Se usa cuando no sabes cuántos pasos necesitas, por ejemplo:
+
+- niveles de una jerarquía
+- árboles
+- relaciones padre-hijo
+- grafos simples
+
+sintaxis
+
+```sql
+WITH RECURSIVE nombre_cte AS (
+
+    -- CASO BASE
+    SELECT ...
+
+    UNION ALL
+
+    -- PARTE RECURSIVA
+    SELECT ...
+    FROM nombre_cte
+    JOIN ...
+)
+SELECT * FROM nombre_cte;
+```
+
+Cosas importantes
+
+- Siempre debe haber un caso base, si no → loop infinito
+- Se usa UNION ALL casi siempre
+- Puede ser costoso si no se controla (ojo en producción)
+
+## Procedimientos Almacenados (Stored Proccedures)
+
+Un Procedimiento Almacenado es un bloque de código SQL guardado en el servidor que permite ejecutar múltiples operaciones lógicas y transaccionales bajo un solo nombre, mejorando la seguridad y el rendimiento al evitar el viaje constante de datos entre la app y la base de datos.
+
+Sintaxis
+
+```sql
+CREATE OR REPLACE PROCEDURE registrar_visita_y_cobro(
+   p_mascota_id INT,
+   p_monto DECIMAL
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Instrucción 1: Insertar la visita
+    INSERT INTO visitas (mascota_id, fecha) VALUES (p_mascota_id, CURRENT_DATE);
+
+    -- Instrucción 2: Actualizar el saldo del dueño
+    UPDATE dueños
+    SET saldo_pendiente = saldo_pendiente + p_monto
+    WHERE id = (SELECT dueño_id FROM mascotas WHERE id = p_mascota_id);
+
+    -- Aquí podrías poner lógica de "si el saldo es mucho, mándale una alerta"
+END;
+$$;
+```
+
+## Triggers
+
+Un Trigger es un bloque de código que se ejecuta de forma automática en respuesta a un evento específico (Insert, Update, Delete) en una tabla, permitiendo automatizar tareas de integridad, auditoría y sincronización de datos directamente en el motor de la base de datos.
+
+Sintaxis
+
+```sql
+-- 1. Creamos la función que guarda el rastro
+CREATE OR REPLACE FUNCTION log_mascota_borrada()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO auditoria_borrados(mascota_id, nombre_mascota, fecha_borrado)
+    VALUES (OLD.id, OLD.nombre, NOW()); -- 'OLD' es el registro que se está borrando
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 2. Creamos el trigger que dispara la función
+CREATE TRIGGER trigger_borrado_mascota
+AFTER DELETE ON mascotas
+FOR EACH ROW
+EXECUTE FUNCTION log_mascota_borrada();
+```
