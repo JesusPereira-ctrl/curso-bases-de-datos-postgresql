@@ -1,4 +1,4 @@
-# Curso de Bases de Datos con PostgreSQL
+# Guia Referencial de Bases de Datos con PostgreSQL
 
 <div align="center">
 <img width="150" height="150" alt="Postgresql_elephant svg" src="./assets/postgresql-logo-svgrepo-com.png" />
